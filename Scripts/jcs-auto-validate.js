@@ -1,5 +1,5 @@
 ﻿/*
- * angular-auto-validate - v1.0.20 - 2014-08-18
+ * angular-auto-validate - v1.4.20 - 2014-09-11
  * https://github.com/jonsamwell/angular-auto-validate
  * Copyright (c) 2014 Jon Samwell (http://www.jonsamwell.com)
  */
@@ -248,17 +248,17 @@
                 var reset = function (el) {
                     angular.forEach(el.find('span'), function (spanEl) {
                         spanEl = angular.element(spanEl);
-                        if (spanEl.hasClass('error-msg') || spanEl.hasClass('form-control-feedback')) {
+                        if (spanEl.hasClass('error-msg') || spanEl.hasClass('form-control-feedback') || spanEl.hasClass('control-feedback')) {
                             spanEl.remove();
                         }
                     });
 
                     el.removeClass('has-success has-error has-feedback');
                 },
-                    findFormGroupElement = function (el) {
+                    findWithClassElementAsc = function (el, klass) {
                         var parent = el;
                         for (var i = 0; i <= 3; i += 1) {
-                            if (parent !== undefined && parent.hasClass('form-group')) {
+                            if (parent !== undefined && parent.hasClass(klass)) {
                                 break;
                             } else if (parent !== undefined) {
                                 parent = parent.parent();
@@ -266,6 +266,31 @@
                         }
 
                         return parent;
+                    },
+
+                    findWithClassElementDesc = function (el, klass) {
+                        var child;
+                        for (var i = 0; i < el.children.length; i += 1) {
+                            child = el.children[i];
+                            if (child !== undefined && angular.element(child).hasClass(klass)) {
+                                break;
+                            } else if (child.children !== undefined) {
+                                child = findWithClassElementDesc(child, klass);
+                                if (child.length > 0) {
+                                    break;
+                                }
+                            }
+                        }
+
+                        return angular.element(child);
+                    },
+
+                    findFormGroupElement = function (el) {
+                        return findWithClassElementAsc(el, 'form-group');
+                    },
+
+                    findInputGroupElement = function (el) {
+                        return findWithClassElementDesc(el, 'input-group');
                     },
 
                     insertAfter = function (referenceNode, newNode) {
@@ -308,11 +333,19 @@
                      * @param {Element} el - The input control element that is the target of the validation.
                      */
                     makeValid = function (el) {
-                        var frmGroupEl = findFormGroupElement(el);
+                        var frmGroupEl = findFormGroupElement(el),
+                            inputGroupEl = findInputGroupElement(frmGroupEl[0]);
+
                         reset(frmGroupEl);
-                        frmGroupEl.addClass('has-success has-feedback');
+                        frmGroupEl.addClass('has-success ' + (inputGroupEl.length > 0 ? '' : 'has-feedback'));
                         if (addValidationStateIcons) {
-                            insertAfter(el, angular.element('<span class="glyphicon glyphicon-ok form-control-feedback"></span>'));
+                            var iconElText = '<span class="glyphicon glyphicon-ok form-control-feedback"></span>';
+                            if (inputGroupEl.length > 0) {
+                                iconElText = iconElText.replace('form-', '');
+                                iconElText = '<span class="input-group-addon control-feedback">' + iconElText + '</span';
+                            }
+
+                            insertAfter(el, angular.element(iconElText));
                         }
                     },
 
@@ -330,12 +363,19 @@
                      */
                     makeInvalid = function (el, errorMsg) {
                         var frmGroupEl = findFormGroupElement(el),
+                            inputGroupEl = findInputGroupElement(frmGroupEl[0]),
                             helpTextEl = angular.element('<span class="help-block has-error error-msg">' + errorMsg + '</span>');
-                        reset(frmGroupEl);
-                        frmGroupEl.addClass('has-error has-feedback');
-                        insertAfter(el, helpTextEl);
+                        reset(frmGroupEl, inputGroupEl);
+                        frmGroupEl.addClass('has-error ' + (inputGroupEl.length > 0 ? '' : 'has-feedback'));
+                        insertAfter(inputGroupEl.length > 0 ? inputGroupEl : el, helpTextEl);
                         if (addValidationStateIcons) {
-                            insertAfter(el, angular.element('<span class="glyphicon glyphicon-remove form-control-feedback"></span>'));
+                            var iconElText = '<span class="glyphicon glyphicon-remove form-control-feedback"></span>';
+                            if (inputGroupEl.length > 0) {
+                                iconElText = iconElText.replace('form-', '');
+                                iconElText = '<span class="input-group-addon control-feedback">' + iconElText + '</span';
+                            }
+
+                            insertAfter(el, angular.element(iconElText));
                         }
                     },
 
@@ -441,7 +481,7 @@
             function ($q, $http) {
                 var currentCulture = 'en-gb',
 
-                    i18nFileRootPath = 'Scripts/i18n',
+                    i18nFileRootPath = 'js/angular-auto-validate/dist/lang',
 
                     cultureRetrievalPromise,
 
@@ -459,7 +499,7 @@
                      * Set the root path to the il8n files on the server
                      *
                      * @param {String} rootPath - The root path on the server to the il8n file - this defaults
-                     * to 'Scripts/i18n/'
+                     * to 'js/angular-auto-validate/lang/'
                      */
                     setI18nFileRootPath = function (rootPath) {
                         i18nFileRootPath = rootPath;
@@ -525,9 +565,14 @@
                             // try and find an attribute which overrides the given error type in the form of errorType-err-type="someMsgKey"
                             errorType += '-err-type';
 
+
                             overrideKey = el.attr(errorType);
                             if (overrideKey === undefined) {
                                 overrideKey = el.attr('data-ng-' + errorType) || el.attr('ng-' + errorType);
+                            }
+
+                            if (overrideKey) {
+                                overrideKey = overrideKey.replace(/[\W]/g, '');
                             }
                         }
 
@@ -728,7 +773,7 @@
                                 return errorTypeToReturn;
                             };
 
-                        if (shouldValidateElement(el) && modelCtrl && needsValidation) {
+                        if ((forceValidation || shouldValidateElement(el)) && modelCtrl && needsValidation) {
                             isValid = !modelCtrl.$invalid;
 
                             if (isValid) {
@@ -767,31 +812,61 @@
                     },
 
                     validateForm = function (frmElement) {
-                        var frmValid = true;
-                        if (frmElement === undefined) {
-                            return false;
+                        var frmValid = true,
+                            frmCtrl = frmElement ? angular.element(frmElement).controller('form') : undefined,
+                            processElement = function (ctrlElement, force) {
+                                var controller, isValid;
+                                ctrlElement = angular.element(ctrlElement);
+                                controller = ctrlElement.controller('ngModel');
+
+                                if (controller !== undefined && (force || shouldValidateElement(ctrlElement))) {
+                                    if (ctrlElement[0].nodeName.toLowerCase() === 'form') {
+                                        // we probably have a sub form
+                                        validateForm(ctrlElement);
+                                    } else {
+                                        isValid = validateElement(controller, ctrlElement, true);
+                                        frmValid = frmValid && isValid;
+                                    }
+                                }
+                            };
+
+                        if (frmElement === undefined || (frmCtrl !== undefined && frmCtrl.disableDynamicValidation)) {
+                            return frmElement !== undefined;
                         }
 
                         angular.forEach(frmElement[0], function (ctrlElement) {
-                            var controller, isValid;
-                            ctrlElement = angular.element(ctrlElement);
-                            controller = ctrlElement.controller('ngModel');
-
-                            if (controller !== undefined && shouldValidateElement(ctrlElement)) {
-                                if (ctrlElement[0].nodeName.toLowerCase() === 'form') {
-                                    // we probably have a sub form
-                                    validateForm(ctrlElement);
-                                } else {
-                                    isValid = validateElement(controller, ctrlElement, true);
-                                    frmValid = frmValid && isValid;
-                                }
-                            }
+                            processElement(ctrlElement);
                         });
 
+                        // If you have a custom form control that should be validated i.e.
+                        // <my-custom-element>...</my-custom-element> it will not be part of the forms
+                        // HTMLFormControlsCollection and thus won't be included in the above element iteration although
+                        // it will be on the Angular FormController (if it has a name attribute).  So adding the directive
+                        // register-custom-form-control="" to the control root and autoValidate will include it in this
+                        // iteration.
+                        if (frmElement[0].customHTMLFormControlsCollection) {
+                            angular.forEach(frmElement[0].customHTMLFormControlsCollection, function (ctrlElement) {
+                                // need to force the validation as the element might not be a known form input type
+                                // so the normal validation process will ignore it.
+                                processElement(ctrlElement, true);
+                            });
+                        }
+
                         return frmValid;
+                    },
+
+                    setElementValidationError = function (element, errorMsgKey, errorMsg) {
+                        if (errorMsgKey) {
+                            validator.getErrorMessage(errorMsgKey, element).then(function (msg) {
+                                validator.makeInvalid(element, msg);
+                            });
+                        } else {
+                            validator.makeInvalid(element, errorMsg);
+                        }
                     };
 
                 return {
+                    setElementValidationError: setElementValidationError,
                     validateElement: validateElement,
                     validateForm: validateForm,
                     resetElement: resetElement,
@@ -817,6 +892,60 @@
                     scope.$on('$destroy', function () {
                         el.off('reset');
                     });
+                }
+            };
+        }
+    ]);
+}(angular));
+
+(function (angular) {
+    'use strict';
+
+    angular.module('jcs-autoValidate').directive('registerCustomFormControl', [
+
+        function () {
+            var findParentForm = function (el) {
+                var parent = el;
+                for (var i = 0; i <= 10; i += 1) {
+                    if (parent !== undefined && parent.nodeName.toLowerCase() === 'form') {
+                        break;
+                    } else if (parent !== undefined) {
+                        parent = angular.element(parent).parent()[0];
+                    }
+                }
+
+                return parent;
+            };
+
+            return {
+                restrict: 'A',
+                link: function (scope, element) {
+                    var frmEl = findParentForm(element.parent()[0]);
+                    if (frmEl) {
+                        frmEl.customHTMLFormControlsCollection = frmEl.customHTMLFormControlsCollection || [];
+                        frmEl.customHTMLFormControlsCollection.push(element[0]);
+                    }
+                }
+            };
+        }
+    ]);
+}(angular));
+
+(function (angular) {
+    'use strict';
+
+    angular.module('jcs-autoValidate').directive('disableDynamicValidation', [
+
+        function () {
+            return {
+                restrict: 'A',
+                require: 'form',
+                compile: function () {
+                    return {
+                        pre: function (scope, element, attrs, ctrl) {
+                            ctrl.disableDynamicValidation = true;
+                        }
+                    };
                 }
             };
         }
@@ -873,6 +1002,7 @@
                     directive.compile = function () {
                         return function (scope, element, attrs, ctrls) {
                             var ngModelCtrl = ctrls[0],
+                                frmCtrl = ctrls[1],
                                 supportsNgModelOptions = angular.version.major >= 1 && angular.version.minor >= 3,
                                 ngModelOptions = attrs.ngModelOptions === undefined ? undefined : scope.$eval(attrs.ngModelOptions),
                                 setValidity = ngModelCtrl.$setValidity,
@@ -887,7 +1017,7 @@
                                 ngModelOptions = ngModelCtrl.$options === undefined ? undefined : ngModelCtrl.$options;
                             }
 
-                            if (attrs.formnovalidate === undefined) {
+                            if (attrs.formnovalidate === undefined || (frmCtrl !== undefined && frmCtrl.disableDynamicValidation !== true)) {
                                 if (supportsNgModelOptions || ngModelOptions === undefined || ngModelOptions.updateOn === undefined || ngModelOptions.updateOn === '') {
                                     ngModelCtrl.$setValidity = function (validationErrorKey, isValid) {
                                         setValidity.call(ngModelCtrl, validationErrorKey, isValid);
@@ -903,7 +1033,7 @@
                                     });
                                 }
 
-                                // We override this so
+                                // We override this so we can reset the element state when it is called.
                                 ngModelCtrl.$setPristine = function () {
                                     setPristine.call(ngModelCtrl);
                                     validationManager.resetElement(element);
@@ -916,6 +1046,26 @@
                                 link.post.apply(this, arguments);
                             } else {
                                 link.apply(this, arguments);
+                            }
+
+                            ngModelCtrl.setExternalValidation = function (errorMsgKey, errorMessage, addToModelErrors) {
+                                if (addToModelErrors) {
+                                    ngModelCtrl.$errors[errorMsgKey] = false;
+                                }
+
+                                validationManager.setElementValidationError(element, errorMsgKey, errorMessage);
+                            };
+
+                            if (frmCtrl) {
+                                frmCtrl.setExternalValidation = function (modelProperty, errorMsgKey, errorMessageOverride, addToModelErrors) {
+                                    var success = false;
+                                    if (frmCtrl[modelProperty]) {
+                                        frmCtrl[modelProperty].setExternalValidation(errorMsgKey, errorMessageOverride, addToModelErrors);
+                                        success = true;
+                                    }
+
+                                    return success;
+                                };
                             }
                         };
                     };

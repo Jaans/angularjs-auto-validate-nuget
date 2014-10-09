@@ -2,10 +2,10 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
     <metadata>
         <id>angular-auto-validate</id>
-        <version>1.0.20</version>
+        <version>1.6.20</version>
         <title>Angular Dynamic Validation Module</title>
-        <authors>Jon C. Samwel, Jaans</authors>
-        <owners>Jon C. Samwel</owners>
+        <authors>Jon C. Samwell,Jaans</authors>
+        <owners>Jon C. Samwell</owners>
         <projectUrl>https://github.com/Jaans/angularjs-auto-validate-nuget</projectUrl>
         <iconUrl>https://secure.gravatar.com/avatar/6e1b5ab3ef1593413f1bee4e5a6e6ae7?s=140&amp;d=https://a248.e.akamai.net/assets.github.com%2Fimages%2Fgravatars%2Fgravatar-140.png</iconUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
@@ -18,12 +18,13 @@ https://github.com/jonsamwell/angular-auto-validate/tree/master/dist</releaseNot
         <tags>angular angularjs SPA validation dynamic errors</tags>
     </metadata>
     <files>
-        <file src="content\Scripts\i18n\jcs-auto-validate_de-de.json" target="content\Scripts\i18n\jcs-auto-validate_de-de.json" />
-        <file src="content\Scripts\i18n\jcs-auto-validate_en-gb.json" target="content\Scripts\i18n\jcs-auto-validate_en-gb.json" />
-        <file src="content\Scripts\i18n\jcs-auto-validate_en-us.json" target="content\Scripts\i18n\jcs-auto-validate_en-us.json" />
-        <file src="content\Scripts\i18n\jcs-auto-validate_fr-fr.json" target="content\Scripts\i18n\jcs-auto-validate_fr-fr.json" />
-        <file src="content\Scripts\jcs-auto-validate.js" target="content\Scripts\jcs-auto-validate.js" />
-        <file src="content\Scripts\jcs-auto-validate.min.js" target="content\Scripts\jcs-auto-validate.min.js" />
-        <file src="content\Scripts\jcs-auto-validate.min.js.map" target="content\Scripts\jcs-auto-validate.min.js.map" />
+        <file src="Scripts\i18n\jcs-auto-validate_de-de.json" target="content\Scripts\i18n\jcs-auto-validate_de-de.json" />
+        <file src="Scripts\i18n\jcs-auto-validate_en-gb.json" target="content\Scripts\i18n\jcs-auto-validate_en-gb.json" />
+        <file src="Scripts\i18n\jcs-auto-validate_en-us.json" target="content\Scripts\i18n\jcs-auto-validate_en-us.json" />
+        <file src="Scripts\i18n\jcs-auto-validate_fr-fr.json" target="content\Scripts\i18n\jcs-auto-validate_fr-fr.json" />
+        <file src="Scripts\i18n\jcs-auto-validate_ru-ru.json" target="content\Scripts\i18n\jcs-auto-validate_ru-ru.json" />
+        <file src="Scripts\jcs-auto-validate.js" target="content\Scripts\jcs-auto-validate.js" />
+        <file src="Scripts\jcs-auto-validate.min.js" target="content\Scripts\jcs-auto-validate.min.js" />
+        <file src="Scripts\jcs-auto-validate.min.js.map" target="content\Scripts\jcs-auto-validate.min.js.map" />
     </files>
 </package>
