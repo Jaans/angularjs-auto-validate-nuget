@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
     <metadata>
         <id>angular-auto-validate</id>
-        <version>1.6.20</version>
+        <version>1.7.21</version>
         <title>Angular Dynamic Validation Module</title>
         <authors>Jon C. Samwell,Jaans</authors>
         <owners>Jon C. Samwell</owners>
@@ -18,11 +18,11 @@ https://github.com/jonsamwell/angular-auto-validate/tree/master/dist</releaseNot
         <tags>angular angularjs SPA validation dynamic errors</tags>
     </metadata>
     <files>
-        <file src="Scripts\i18n\jcs-auto-validate_de-de.json" target="content\Scripts\i18n\jcs-auto-validate_de-de.json" />
-        <file src="Scripts\i18n\jcs-auto-validate_en-gb.json" target="content\Scripts\i18n\jcs-auto-validate_en-gb.json" />
-        <file src="Scripts\i18n\jcs-auto-validate_en-us.json" target="content\Scripts\i18n\jcs-auto-validate_en-us.json" />
-        <file src="Scripts\i18n\jcs-auto-validate_fr-fr.json" target="content\Scripts\i18n\jcs-auto-validate_fr-fr.json" />
-        <file src="Scripts\i18n\jcs-auto-validate_ru-ru.json" target="content\Scripts\i18n\jcs-auto-validate_ru-ru.json" />
+        <file src="Scripts\lang\jcs-auto-validate_de-de.json" target="content\Scripts\lang\jcs-auto-validate_de-de.json" />
+        <file src="Scripts\lang\jcs-auto-validate_en-gb.json" target="content\Scripts\lang\jcs-auto-validate_en-gb.json" />
+        <file src="Scripts\lang\jcs-auto-validate_en-us.json" target="content\Scripts\lang\jcs-auto-validate_en-us.json" />
+        <file src="Scripts\lang\jcs-auto-validate_fr-fr.json" target="content\Scripts\lang\jcs-auto-validate_fr-fr.json" />
+        <file src="Scripts\lang\jcs-auto-validate_ru-ru.json" target="content\Scripts\lang\jcs-auto-validate_ru-ru.json" />
         <file src="Scripts\jcs-auto-validate.js" target="content\Scripts\jcs-auto-validate.js" />
         <file src="Scripts\jcs-auto-validate.min.js" target="content\Scripts\jcs-auto-validate.min.js" />
         <file src="Scripts\jcs-auto-validate.min.js.map" target="content\Scripts\jcs-auto-validate.min.js.map" />

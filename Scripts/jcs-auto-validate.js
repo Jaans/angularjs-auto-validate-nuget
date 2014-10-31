@@ -1,5 +1,5 @@
 ﻿/*
- * angular-auto-validate - v1.4.20 - 2014-09-11
+ * angular-auto-validate - v1.4.20 - 2014-10-16
  * https://github.com/jonsamwell/angular-auto-validate
  * Copyright (c) 2014 Jon Samwell (http://www.jonsamwell.com)
  */
@@ -481,7 +481,7 @@
             function ($q, $http) {
                 var currentCulture = 'en-gb',
 
-                    i18nFileRootPath = 'js/angular-auto-validate/dist/lang',
+                    i18nFileRootPath = 'Scripts/lang',
 
                     cultureRetrievalPromise,
 
@@ -499,7 +499,7 @@
                      * Set the root path to the il8n files on the server
                      *
                      * @param {String} rootPath - The root path on the server to the il8n file - this defaults
-                     * to 'js/angular-auto-validate/lang/'
+                     * to 'Scripts/lang/'
                      */
                     setI18nFileRootPath = function (rootPath) {
                         i18nFileRootPath = rootPath;
@@ -997,9 +997,9 @@
                 'jcs-debounce',
                 function ($timeout, $delegate, validationManager, debounce) {
                     var directive = $delegate[0],
-                        link = directive.link;
+                        link = directive.link || directive.compile;
 
-                    directive.compile = function () {
+                    directive.compile = function (el) {
                         return function (scope, element, attrs, ctrls) {
                             var ngModelCtrl = ctrls[0],
                                 frmCtrl = ctrls[1],
@@ -1011,6 +1011,11 @@
                                     validationManager.validateElement(ngModelCtrl, element);
                                 }, 100);
 
+                            // in the RC of 1.3 there is no directive.link only the directive.compile which
+                            // needs to be invoked to get at the link functions.
+                            if (supportsNgModelOptions && angular.isFunction(link)) {
+                                link = link(el);
+                            }
 
                             if (link.pre) {
                                 link.pre.apply(this, arguments);
