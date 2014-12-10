@@ -1,5 +1,5 @@
 ﻿/*
- * angular-auto-validate - v1.4.20 - 2014-10-16
+ * angular-auto-validate - v1.13.22 - 2014-12-06
  * https://github.com/jonsamwell/angular-auto-validate
  * Copyright (c) 2014 Jon Samwell (http://www.jonsamwell.com)
  */
@@ -19,6 +19,7 @@
                 var elementStateModifiers = {},
                     enableValidElementStyling = true,
                     enableInvalidElementStyling = true,
+                    validationEnabled = true,
 
                     toBoolean = function (value) {
                         var v;
@@ -53,6 +54,45 @@
                     invalidElementStylingEnabled = function (el) {
                         return enableInvalidElementStyling && !getBooleanAttributeValue(el, 'disable-invalid-styling');
                     };
+
+                /**
+                 * @ngdoc function
+                 * @name validator#enable
+                 * @methodOf validator
+                 *
+                 * @description
+                 * By default auto validate will validate all forms and elements with an ngModel directive on.  By
+                 * setting enabled to false you will explicitly have to opt in to enable validation on forms and child
+                 * elements.
+                 *
+                 * Note: this can be overridden by add the 'auto-validate-enabled="true/false' attribute to a form.
+                 *
+                 * Example:
+                 * <pre>
+                 *  app.config(function (validator) {
+                 *    validator.enable(false);
+                 *  });
+                 * </pre>
+                 *
+                 * @param {Boolean} isEnabled true to enable, false to disable.
+                 */
+                this.enable = function (isEnabled) {
+                    validationEnabled = isEnabled;
+                };
+
+                /**
+                 * @ngdoc function
+                 * @name validator#isEnabled
+                 * @methodOf validator
+                 *
+                 * @description
+                 * Returns true if the library is enabeld.
+                 *
+                 * @return {Boolean} true if enabled, otherwise false.
+                 */
+                this.isEnabled = function () {
+                    return validationEnabled;
+                };
 
                 /**
                  * @ngdoc function
@@ -229,7 +269,6 @@
                 };
 
                 this.$get = [
-
                     function () {
                         return this;
                     }
@@ -243,8 +282,8 @@
 
     angular.module('jcs-autoValidate')
         .factory('bootstrap3ElementModifier', [
-
-            function () {
+            '$log',
+            function ($log) {
                 var reset = function (el) {
                     angular.forEach(el.find('span'), function (spanEl) {
                         spanEl = angular.element(spanEl);
@@ -256,16 +295,18 @@
                     el.removeClass('has-success has-error has-feedback');
                 },
                     findWithClassElementAsc = function (el, klass) {
-                        var parent = el;
+                        var retuenEl,
+                            parent = el;
                         for (var i = 0; i <= 3; i += 1) {
                             if (parent !== undefined && parent.hasClass(klass)) {
+                                retuenEl = parent;
                                 break;
                             } else if (parent !== undefined) {
                                 parent = parent.parent();
                             }
                         }
 
-                        return parent;
+                        return retuenEl;
                     },
 
                     findWithClassElementDesc = function (el, klass) {
@@ -334,18 +375,23 @@
                      */
                     makeValid = function (el) {
                         var frmGroupEl = findFormGroupElement(el),
+                            inputGroupEl;
+
+                        if (frmGroupEl) {
+                            reset(frmGroupEl);
                             inputGroupEl = findInputGroupElement(frmGroupEl[0]);
+                            frmGroupEl.addClass('has-success ' + (inputGroupEl.length > 0 ? '' : 'has-feedback'));
+                            if (addValidationStateIcons) {
+                                var iconElText = '<span class="glyphicon glyphicon-ok form-control-feedback"></span>';
+                                if (inputGroupEl.length > 0) {
+                                    iconElText = iconElText.replace('form-', '');
+                                    iconElText = '<span class="input-group-addon control-feedback">' + iconElText + '</span';
+                                }
 
-                        reset(frmGroupEl);
-                        frmGroupEl.addClass('has-success ' + (inputGroupEl.length > 0 ? '' : 'has-feedback'));
-                        if (addValidationStateIcons) {
-                            var iconElText = '<span class="glyphicon glyphicon-ok form-control-feedback"></span>';
-                            if (inputGroupEl.length > 0) {
-                                iconElText = iconElText.replace('form-', '');
-                                iconElText = '<span class="input-group-addon control-feedback">' + iconElText + '</span';
+                                insertAfter(el, angular.element(iconElText));
                             }
-
-                            insertAfter(el, angular.element(iconElText));
+                        } else {
+                            $log.error('Angular-auto-validate: invalid bs3 form structure elements must be wrapped by a form-group class');
                         }
                     },
 
@@ -363,19 +409,25 @@
                      */
                     makeInvalid = function (el, errorMsg) {
                         var frmGroupEl = findFormGroupElement(el),
-                            inputGroupEl = findInputGroupElement(frmGroupEl[0]),
-                            helpTextEl = angular.element('<span class="help-block has-error error-msg">' + errorMsg + '</span>');
-                        reset(frmGroupEl, inputGroupEl);
-                        frmGroupEl.addClass('has-error ' + (inputGroupEl.length > 0 ? '' : 'has-feedback'));
-                        insertAfter(inputGroupEl.length > 0 ? inputGroupEl : el, helpTextEl);
-                        if (addValidationStateIcons) {
-                            var iconElText = '<span class="glyphicon glyphicon-remove form-control-feedback"></span>';
-                            if (inputGroupEl.length > 0) {
-                                iconElText = iconElText.replace('form-', '');
-                                iconElText = '<span class="input-group-addon control-feedback">' + iconElText + '</span';
-                            }
+                            helpTextEl = angular.element('<span class="help-block has-error error-msg">' + errorMsg + '</span>'),
+                            inputGroupEl;
 
-                            insertAfter(el, angular.element(iconElText));
+                        if (frmGroupEl) {
+                            reset(frmGroupEl);
+                            inputGroupEl = findInputGroupElement(frmGroupEl[0]);
+                            frmGroupEl.addClass('has-error ' + (inputGroupEl.length > 0 ? '' : 'has-feedback'));
+                            insertAfter(inputGroupEl.length > 0 ? inputGroupEl : el, helpTextEl);
+                            if (addValidationStateIcons) {
+                                var iconElText = '<span class="glyphicon glyphicon-remove form-control-feedback"></span>';
+                                if (inputGroupEl.length > 0) {
+                                    iconElText = iconElText.replace('form-', '');
+                                    iconElText = '<span class="input-group-addon control-feedback">' + iconElText + '</span';
+                                }
+
+                                insertAfter(el, angular.element(iconElText));
+                            }
+                        } else {
+                            $log.error('Angular-auto-validate: invalid bs3 form structure elements must be wrapped by a form-group class');
                         }
                     },
 
@@ -481,7 +533,7 @@
             function ($q, $http) {
                 var currentCulture = 'en-gb',
 
-                    i18nFileRootPath = 'Scripts/lang',
+                    i18nFileRootPath = 'js/angular-auto-validate/dist/lang',
 
                     cultureRetrievalPromise,
 
@@ -499,7 +551,7 @@
                      * Set the root path to the il8n files on the server
                      *
                      * @param {String} rootPath - The root path on the server to the il8n file - this defaults
-                     * to 'Scripts/lang/'
+                     * to 'js/angular-auto-validate/lang/'
                      */
                     setI18nFileRootPath = function (rootPath) {
                         i18nFileRootPath = rootPath;
@@ -738,14 +790,33 @@
 (function (angular) {
     'use strict';
 
+
+    angular.module('jcs-autoValidate')
+        .factory('jcs-elementUtils', [
+            function () {
+                var isElementVisible = function (el) {
+                    return el[0].offsetWidth > 0 && el[0].offsetHeight > 0;
+                };
+
+                return {
+                    isElementVisible: isElementVisible
+                };
+            }
+        ]);
+
     angular.module('jcs-autoValidate')
         .factory('validationManager', [
             'validator',
-            function (validator) {
+            'jcs-elementUtils',
+            function (validator, elementUtils) {
                 var elementTypesToValidate = ['input', 'textarea', 'select', 'form'],
 
+                    elementIsVisible = function (el) {
+                        return elementUtils.isElementVisible(el);
+                    },
+
                     shouldValidateElement = function (el) {
-                        return el && el.length > 0 && elementTypesToValidate.indexOf(el[0].nodeName.toLowerCase()) > -1;
+                        return el && el.length > 0 && elementIsVisible(el) && elementTypesToValidate.indexOf(el[0].nodeName.toLowerCase()) > -1;
                     },
 
                     /**
@@ -773,7 +844,7 @@
                                 return errorTypeToReturn;
                             };
 
-                        if ((forceValidation || shouldValidateElement(el)) && modelCtrl && needsValidation) {
+                        if ((forceValidation || (shouldValidateElement(el) && modelCtrl && needsValidation))) {
                             isValid = !modelCtrl.$invalid;
 
                             if (isValid) {
@@ -781,9 +852,15 @@
                             } else {
                                 errorType = findErrorType(modelCtrl.$error);
 
-                                validator.getErrorMessage(errorType, el).then(function (errorMsg) {
-                                    validator.makeInvalid(el, errorMsg);
-                                });
+                                if (errorType === undefined) {
+                                    // we have a weird situation some users are encountering where a custom control
+                                    // is valid but the ngModel is report it isn't and thus no valid error type can be found
+                                    isValid = true;
+                                } else {
+                                    validator.getErrorMessage(errorType, el).then(function (errorMsg) {
+                                        validator.makeInvalid(el, errorMsg);
+                                    });
+                                }
                             }
                         }
 
@@ -934,16 +1011,19 @@
 (function (angular) {
     'use strict';
 
-    angular.module('jcs-autoValidate').directive('disableDynamicValidation', [
-
-        function () {
+    angular.module('jcs-autoValidate').directive('form', [
+        'validator',
+        function (validator) {
             return {
-                restrict: 'A',
+                restrict: 'E',
                 require: 'form',
                 compile: function () {
                     return {
                         pre: function (scope, element, attrs, ctrl) {
-                            ctrl.disableDynamicValidation = true;
+                            ctrl.disableDynamicValidation = !validator.isEnabled();
+                            if (attrs.disableDynamicValidation !== undefined) {
+                                ctrl.disableDynamicValidation = attrs.disableDynamicValidation === undefined || attrs.disableDynamicValidation === '' || attrs.disableDynamicValidation === 'true';
+                            }
                         }
                     };
                 }
@@ -968,7 +1048,7 @@
                         return function (scope, element) {
                             element.on('submit', function (event) {
                                 scope.$apply(function () {
-                                    if (force === true || validationManager.validateForm(element)) {
+                                    if (validationManager.validateForm(element) || force === true) {
                                         fn(scope, {
                                             $event: event
                                         });
@@ -1022,7 +1102,7 @@
                                 ngModelOptions = ngModelCtrl.$options === undefined ? undefined : ngModelCtrl.$options;
                             }
 
-                            if (attrs.formnovalidate === undefined || (frmCtrl !== undefined && frmCtrl.disableDynamicValidation !== true)) {
+                            if (attrs.formnovalidate === undefined || (frmCtrl !== undefined && frmCtrl.disableDynamicValidation === false)) {
                                 if (supportsNgModelOptions || ngModelOptions === undefined || ngModelOptions.updateOn === undefined || ngModelOptions.updateOn === '') {
                                     ngModelCtrl.$setValidity = function (validationErrorKey, isValid) {
                                         setValidity.call(ngModelCtrl, validationErrorKey, isValid);
@@ -1055,10 +1135,26 @@
 
                             ngModelCtrl.setExternalValidation = function (errorMsgKey, errorMessage, addToModelErrors) {
                                 if (addToModelErrors) {
-                                    ngModelCtrl.$errors[errorMsgKey] = false;
+                                    if (ngModelCtrl.$error) {
+                                        ngModelCtrl.$error[errorMsgKey] = false;
+                                    } else {
+                                        ngModelCtrl.$errors[errorMsgKey] = false;
+                                    }
                                 }
 
                                 validationManager.setElementValidationError(element, errorMsgKey, errorMessage);
+                            };
+
+                            ngModelCtrl.removeExternalValidation = function (errorMsgKey, addToModelErrors) {
+                                if (addToModelErrors) {
+                                    if (ngModelCtrl.$error) {
+                                        ngModelCtrl.$error[errorMsgKey] = true;
+                                    } else {
+                                        ngModelCtrl.$errors[errorMsgKey] = true;
+                                    }
+                                }
+
+                                validationManager.resetElement(element);
                             };
 
                             if (frmCtrl) {
@@ -1066,6 +1162,16 @@
                                     var success = false;
                                     if (frmCtrl[modelProperty]) {
                                         frmCtrl[modelProperty].setExternalValidation(errorMsgKey, errorMessageOverride, addToModelErrors);
+                                        success = true;
+                                    }
+
+                                    return success;
+                                };
+
+                                frmCtrl.removeExternalValidation = function (modelProperty, errorMsgKey, errorMessageOverride, addToModelErrors) {
+                                    var success = false;
+                                    if (frmCtrl[modelProperty]) {
+                                        frmCtrl[modelProperty].removeExternalValidation(errorMsgKey, addToModelErrors);
                                         success = true;
                                     }
 
